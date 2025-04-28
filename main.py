@@ -1,28 +1,44 @@
 import pygame
 from pygame.locals import *
+from fuzzy_logic import crear_sistema_lechuga
+from pfal_config import CULTIVOS
 
-# Inicializar PyGame
-pygame.init()
-screen = pygame.display.set_mode((800, 600))
+class PFALSimulator:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((1024, 768))
+        self.clock = pygame.time.Clock()
+        self.fuzzy_system = crear_sistema_lechuga()
+        self.cultivo_actual = CULTIVOS["lechuga"]
+        self.time_factor = 1.0  # 1x, 2x, 5x
 
-# Bucle principal
-running = True
-time_factor = 1.0
-clock = pygame.time.Clock()
+    def manejar_eventos(self):
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                return False
+            # Ej: Tecla '2' acelera a 2x
+            if event.type == KEYDOWN and event.key == K_2:
+                self.time_factor = 2.0
+        return True
 
-while running:
-    dt = clock.tick(60) * time_factor / 1000.0  # Delta time ajustado
+    def actualizar_simulacion(self, dt):
+        # Aquí iría la lógica de actualización usando el sistema difuso
+        pass
 
-    # Eventos (ej: acelerar tiempo con teclas)
-    for event in pygame.event.get():
-        if event.type == KEYDOWN:
-            if event.key == K_1: time_factor = 1.0
-            if event.key == K_2: time_factor = 2.0
+    def dibujar_interfaz(self):
+        self.screen.fill((0, 0, 0))
+        # Dibujar racks, luces, etc.
+        pygame.display.flip()
 
-    # Actualizar lógica de simulación aquí (usar dt)
-    update_pfal_simulation(dt)
+    def run(self):
+        running = True
+        while running:
+            dt = self.clock.tick(60) * self.time_factor / 1000.0
+            running = self.manejar_eventos()
+            self.actualizar_simulacion(dt)
+            self.dibujar_interfaz()
 
-    # Dibujar interfaz
-    screen.fill((255, 255, 255))
-    draw_pfal_graphics()
-    pygame.display.flip()
+if __name__ == "__main__":
+    simulador = PFALSimulator()
+    simulador.run()
