@@ -14,7 +14,6 @@ font = pygame.font.Font(None, 24)
 COLOR_FONDO = (30, 30, 30)
 COLOR_SLIDER = (70, 130, 180)
 COLOR_TEXTO = (255, 255, 255)
-COLOR_RACK = (100, 50, 20)  # Marrón para racks
 
 class Slider:
     def __init__(self, x, y, w, h, min_val, max_val, initial_val, label):
@@ -58,13 +57,20 @@ class PFALSimulator:
         self.ventilacion = 0.0
         self.inyector_co2 = 0.0
         self.ajuste_luz = 100.0
+        self.ventilacion_angle = 0  # Para la animación
         
-        # Cargar gráficos (¡asegúrate de tener estas imágenes en /assets!)
+        # Cargar gráficos
         try:
+            # Elementos principales
             self.rack_img = pygame.image.load("PFAL_Simulator/PFAL-Simulator/assets/rack.png").convert_alpha()
             self.planta_img = pygame.image.load("PFAL_Simulator/PFAL-Simulator/assets/lettuce.png").convert_alpha()
             self.luz_on = pygame.image.load("PFAL_Simulator/PFAL-Simulator/assets/luz_on.png").convert_alpha()
             self.luz_off = pygame.image.load("PFAL_Simulator/PFAL-Simulator/assets/luz_off.png").convert_alpha()
+            
+            # Nuevas imágenes de ventilación
+            self.ventilacion_on = pygame.image.load("PFAL_Simulator/PFAL-Simulator/assets/ventilacion_on.png").convert_alpha()
+            self.ventilacion_off = pygame.image.load("PFAL_Simulator/PFAL-Simulator/assets/ventilacion_off.png").convert_alpha()
+            
         except Exception as e:
             print(f"Error cargando imágenes: {e}")
             pygame.quit()
@@ -93,21 +99,28 @@ class PFALSimulator:
 
     def dibujar_pfab(self):
         # Dibujar racks
-        for y in [200, 300, 400]:  # Tres niveles de racks
+        for y in [200, 300, 400]:
             screen.blit(self.rack_img, (400, y))
             
-            # Dibujar plantas (4 por rack)
+            # Dibujar plantas
             for x_offset in [0, 150, 300, 450]:
                 screen.blit(self.planta_img, (420 + x_offset, y + 20))
         
-        # Dibujar luces LED
+        # Luces LED
         luz_actual = self.luz_on if self.ajuste_luz > 30 else self.luz_off
         screen.blit(luz_actual, (400, 180))  # Luz superior
         screen.blit(luz_actual, (400, 480))  # Luz inferior
         
-        # Indicador de ventilación (animación simple)
-        ventilacion_color = (0, 255, 0) if self.ventilacion > 50 else (100, 100, 100)
-        pygame.draw.circle(screen, ventilacion_color, (1100, 300), 30)
+        # Ventilación animada
+        if self.ventilacion > 0:
+            self.ventilacion_angle = (self.ventilacion_angle + self.ventilacion * 0.7) % 360
+            ventilacion_img = pygame.transform.rotate(self.ventilacion_on, self.ventilacion_angle)
+        else:
+            ventilacion_img = self.ventilacion_off
+        
+        # Centrar y dibujar ventilación
+        vent_rect = ventilacion_img.get_rect(center=(1100, 300))
+        screen.blit(ventilacion_img, vent_rect)
 
     def dibujar_panel_control(self):
         # Fondo del panel
@@ -145,8 +158,8 @@ class PFALSimulator:
             
             # Actualizar y dibujar
             self.actualizar_fuzzy()
-            self.dibujar_pfab()       # Vista de la PFAL
-            self.dibujar_panel_control()  # Panel de control
+            self.dibujar_pfab()
+            self.dibujar_panel_control()
             
             pygame.display.flip()
 
