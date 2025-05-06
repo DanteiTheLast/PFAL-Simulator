@@ -98,29 +98,43 @@ class PFALSimulator:
             self.ventilacion, self.inyector_co2, self.ajuste_luz = 0.0, 0.0, 100.0
 
     def dibujar_pfab(self):
-        # Dibujar racks
-        for y in [200, 300, 400]:
-            screen.blit(self.rack_img, (400, y))
-            
-            # Dibujar plantas
-            for x_offset in [0, 150, 300, 450]:
-                screen.blit(self.planta_img, (420 + x_offset, y + 20))
-        
-        # Luces LED
-        luz_actual = self.luz_on if self.ajuste_luz > 30 else self.luz_off
-        screen.blit(luz_actual, (400, 180))  # Luz superior
-        screen.blit(luz_actual, (400, 480))  # Luz inferior
-        
-        # Ventilación animada
+        config = {
+            'ventilador_pos': (1150, 100),
+            'rack_y_positions': [200, 320, 440],
+            'offset_rack_y': 90,
+            'posicion_luces_y': 130,
+            'ancho_rack': 600,  # Ancho del sprite del rack
+            'num_lechugas': 5,
+            'separacion_lechugas': 120  # Espacio entre centros de lechugas
+        }
+
+        # Calcular posiciones centralizadas
+        for y_lechugas in config['rack_y_positions']:
+            # 1. Calcular posición inicial para centrar las lechugas
+            centro_rack_x = 400 + (config['ancho_rack'] // 2)  # 400 + 300 = 700px
+            ancho_total_lechugas = (config['num_lechugas'] - 1) * config['separacion_lechugas']
+            inicio_x = centro_rack_x - (ancho_total_lechugas // 2)
+
+            # 2. Dibujar lechugas centradas
+            for i in range(config['num_lechugas']):
+                x_planta = inicio_x + (i * config['separacion_lechugas'])
+                screen.blit(self.planta_img, (x_planta - self.planta_img.get_width()//2, y_lechugas))  # Centrar sprite
+                
+                # 3. Dibujar luces centradas sobre lechugas
+                luz_x = x_planta - self.luz_on.get_width()//2
+                screen.blit(self.luz_on if self.ajuste_luz > 30 else self.luz_off, 
+                        (luz_x, config['posicion_luces_y']))
+
+            # 4. Dibujar rack centrado (ya está en posición X=400 que es el centro)
+            screen.blit(self.rack_img, (400, y_lechugas + config['offset_rack_y']))
+
+        # Ventilador (posición mantenida)
+        ventilacion_img = self.ventilacion_on if self.ventilacion > 0 else self.ventilacion_off
         if self.ventilacion > 0:
             self.ventilacion_angle = (self.ventilacion_angle + self.ventilacion * 0.7) % 360
             ventilacion_img = pygame.transform.rotate(self.ventilacion_on, self.ventilacion_angle)
-        else:
-            ventilacion_img = self.ventilacion_off
         
-        # Centrar y dibujar ventilación
-        vent_rect = ventilacion_img.get_rect(center=(1100, 300))
-        screen.blit(ventilacion_img, vent_rect)
+        screen.blit(ventilacion_img, ventilacion_img.get_rect(center=config['ventilador_pos']))
 
     def dibujar_panel_control(self):
         # Fondo del panel
