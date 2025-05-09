@@ -2,7 +2,7 @@
 CULTIVOS = {
     "lechuga": {
         "nombre": "Lactuca sativa",
-        "fotoperiodo": (12, 16),       # Horas de luz
+        "fotoperiodo":  (6, 22),       # Horas de luz
         "temperatura_optima": (16, 18), # °C
         "humedad_optima": (50, 70),     # %
         "co2_optimo": (1200, 1500),     # ppm
