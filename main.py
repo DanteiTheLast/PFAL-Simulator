@@ -65,13 +65,20 @@ class PFALSimulator:
         self.dias_transcurridos = 1
         self.luz_encendida = True
 
+        # Estado de los actuadores 
+        self.ventilacion = 0.0
+        self.inyector_co2 = 0.0
+        self.ajuste_luz = 100.0
+        self.ventilacion_angle = 0  
+        self.calefaccion = 0.0
+        self.riego = 0.0 
+
         # Sliders
         self.sliders = [
             Slider(50, 50, 200, 20, 0, 40, 18, "Temperatura (°C)"),
-            Slider(50, 100, 200, 20, 0, 100, 60, "Humedad (%)"),
-            Slider(50, 150, 200, 20, 200, 2000, 1200, "CO₂ (ppm)"),
-            Slider(50, 200, 200, 20, 5.0, 9.0, 6.8, "pH"),
-            Slider(50, 250, 200, 20, 0, 300, 270, "Luz (µmol)")
+            Slider(50, 100, 200, 20, 200, 2000, 1350, "CO₂ (ppm)"), 
+            Slider(50, 150, 200, 20, 0, 100, 60, "Humedad Sustrato (%)"),
+            Slider(50, 200, 200, 20, 0, 300, 270, "Luz (µmol)"),  # Corregir posición
         ]
 
         # Botones de velocidad
@@ -96,25 +103,35 @@ class PFALSimulator:
             exit()
 
     def actualizar_fuzzy(self):
+        
         inputs = {
             'temperatura': self.sliders[0].val,
-            'humedad': self.sliders[1].val,
-            'co2': self.sliders[2].val,
-            'ph': self.sliders[3].val,
-            'luz_intensidad': self.sliders[4].val if self.luz_encendida else 0
+            'co2': self.sliders[1].val,
+            'humedad_sustrato': self.sliders[2].val,
+            'luz_intensidad': self.sliders[3].val if self.luz_encendida else 0,  # Slider 3 ahora es luz
         }
         
         for key, val in inputs.items():
             self.fuzzy_system.input[key] = val
         
         try:
-            self.fuzzy_system.compute()
-            self.ventilacion = float(self.fuzzy_system.output.get('ventilacion', 0.0))
-            self.inyector_co2 = float(self.fuzzy_system.output.get('inyector_co2', 0.0))
-            self.ajuste_luz = float(self.fuzzy_system.output.get('ajuste_luz', 100.0))
+                self.fuzzy_system.compute()
+                self.ventilacion = float(self.fuzzy_system.output.get('ventilacion', 0.0))
+                self.inyector_co2 = float(self.fuzzy_system.output.get('inyector_co2', 0.0))
+                self.ajuste_luz = float(self.fuzzy_system.output.get('ajuste_luz', 100.0))
+                self.calefaccion = float(self.fuzzy_system.output.get('calefaccion', 0.0))  
+                self.riego = float(self.fuzzy_system.output.get('riego', 0.0))  
         except Exception as e:
-            print(f"Error en lógica difusa: {e}")
-            self.ventilacion, self.inyector_co2, self.ajuste_luz = 0.0, 0.0, 100.0
+                print(f"Error en lógica difusa: {e}")
+                self.ventilacion, self.inyector_co2, self.ajuste_luz = 0.0, 0.0, 100.0
+                self.calefaccion = 0.0  
+                self.riego = 0.0 
+
+        except Exception as e:
+            print(f"Error: {e}")
+            self.ajuste_luz = 0.0 if not self.luz_encendida else 100.0
+
+        print("Reglas activas:", self.fuzzy_system.ctrl.rules)
 
     def actualizar_ciclo_luz(self):
         horas_actuales = (self.tiempo_transcurrido // 3600) % 24
@@ -178,6 +195,8 @@ class PFALSimulator:
             ("Ventilación", self.ventilacion),
             ("Inyector CO₂", self.inyector_co2),
             ("Ajuste Luz", self.ajuste_luz),
+            ("Calefacción", self.calefaccion),
+            ("Riego", self.riego)  
         ]
         
         for label, value in indicadores:
