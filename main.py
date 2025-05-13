@@ -64,6 +64,7 @@ class PFALSimulator:
         self.tiempo_transcurrido = 0  # Segundos simulados
         self.dias_transcurridos = 1
         self.luz_encendida = True
+        self.ventilacion_angle = 0 
 
         # Sliders
         self.sliders = [
